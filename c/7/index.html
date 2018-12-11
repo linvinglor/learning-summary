@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>点击切换背景色，刷新后保存-豪情</title>
+    <link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="../../css/bootstrap-theme.min.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="../../css/reset.css" media="all"/>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <style type="text/css">
+        *{margin:0;padding:0;}
+        body{font:12px/1.125 Microsoft YaHei;background:#fff;}
+        ul,li{list-style:none;}
+        a{text-decoration:none;}
+        .wrap{width:580px;height:350px;text-align:center;margin:150px auto;}
+        .wrap .btn{margin:0 10px;padding:8px 40px;}
+        .inner{padding:15px;}
+        .clearfix{overflow:hidden;_zoom:1;}
+        .none{display:none;}
+        .color-panle{display:none;width:379px;}
+        .color-list{border-left:1px solid #ccc;}
+        .color-list ul{float:left; width:120px;margin:0;padding:0;}
+        .color-list li{list-style:none;float:left;width:20px;height:20px;border-bottom:1px solid #000;border-right:1px solid #000;overflow:hidden;cursor:pointer;}
+        .color-read{padding-bottom:5px;height:25px;}
+        .color-read .color-val{float:right;}
+        .color-read .color-show{float:left;width:50px;height:20px;border:1px solid #ccc;}
+        #panel{position:absolute;}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="demo" id="container">
+        <input type="text" name="" size="60" id="input" class="input input-lg">
+
+    </div>
+</div>
+<div style="display:none;">
+    <div id="div" style="width:100px;height:200px;background:#000;"></div>
+    <button id="btn">test</button>
+</div>
+<script>
+    (function(){
+        var dog = {
+            $ : function(selector){
+                return document.querySelector(selector)
+            },
+            all : function(selector){
+                return document.querySelectorAll(selector)
+            },
+            on : function(el, type, handler){
+                el.addEventListener(type, handler, false)
+            },
+            off : function(el, type, handler){
+                el.removeEventListener(type, handler)
+            },
+            position : function(obj, attr){
+                if(obj){
+                    var method = obj.getBoundingClientRect()
+                    return attr ? method[attr] : method
+                } else {
+                    console.log('对象不存在！')
+                }
+            },
+            setCookie : function(key, value, day){
+                var d = new Date()
+                d.setDate(d.getDate() + day)
+                document.cookie = key + '=' + value + ';expires=' + d
+            },
+            getCookie : function(key){
+                var list = document.cookie.split(';')
+                for (var i = 0; i < list.length; i++) {
+                    var one = list[i].split('=')
+                    if(one[0] == key){
+                        return one[1]
+                    }
+                };
+                return ''
+            },
+            delCookies : function(key){
+                this.setCookie(key, 1, -1)
+            },
+            show : function(obj){
+                obj.style.display = 'block'
+            },
+            hide : function(obj){
+                obj.style.display = 'none'
+            }
+        };
+
+        function Palette(){
+            var args = arguments[0],
+                dom = args.dom
+
+            for(var key in args){
+                if(key == 'dom'){
+                    this.getDom(dom);
+                } else {
+                    this[key] = args[key]
+                }
+            }
+            this.init()
+        }
+        Palette.prototype = {
+            init : function(){
+                this.render()
+            },
+            __dom : {
+                __list : '.color-list',
+                __show : '.color-show'
+            },
+            setDom : function(){
+                this.getDom(this.__dom)
+            },
+            getDom : function(dom){
+                for(var prop in dom){
+                    this[prop] = dog.$(dom[prop])
+                }
+            },
+            render : function(){
+                var dom = null
+
+                if(!(dom = dog.$('#panel'))){
+                    this.createPanel()
+                } else {
+                    dog.show(dom)
+                    this.panel = dom
+                }
+            },
+            createPanel : function(){
+                this.createBody()
+                this.setDom()
+                this.bind()
+                this.createLump()
+            },
+            createBody : function(){
+                var div = document.createElement('div'),
+                    pos = dog.position(this.input)
+
+                div.id = 'panel'
+                div.innerHTML = this.tpl[0]
+                div.style.top = pos.top + 52 + 'px'
+                div.style.left = pos.left + 'px'
+                div.children[0].style.display = 'block'
+                this.container.appendChild(div)
+                this.panel = div
+            },
+            createLump : function(){
+                var data = this.getColorsData()
+
+                this.__list.innerHTML = data
+            },
+            getColorsData : function(){
+                var arr = ['0', '3', '6', '9', 'c', 'f'],
+                    html = ''
+
+                for (var i = 0; i < arr.length; i++) {
+                    html += this.createColors(arr[i], arr)
+                }
+                return html
+            },
+            createColors : function(one, arr){
+                var colors = '<ul>',
+                    item
+
+                for (var i = 0; i < 6; i++) {
+                    for(var j = 0; j < 6; j++) {
+                        item = one + arr[j] + arr[i]
+                        colors += '<li data-color="' + item + '" style="background:#' + item + '"></li>'
+                    }
+                }
+                colors += '</ul>'
+                return colors
+            },
+            bind : function(){
+                var self = this,
+                    __li = self.__list.getElementsByTagName('li')
+
+                dog.on(document, 'click', function(e){
+                    if(e.target != self.panel){
+                        dog.hide(self.panel)
+                    }
+                })
+                
+                dog.on(self.panel, 'click', function(e){
+                    var target = e.target,
+                        color = '#' + target.getAttribute('data-color')
+
+                    self.input.value = color
+                    self.__show.style.background = color
+
+                    setTimeout(function(){
+                        document.body.style.background = color
+                    }, 150)
+                    e.stopPropagation()
+                })
+
+                dog.on(self.panel, 'mouseover', function(e){
+                    var target = e.target
+                    if(target.tagName.toLowerCase() == 'li'){
+                        self.handlerLi(target, 0)
+                    }
+                })
+
+                dog.on(self.panel, 'mouseout', function(e){
+                    var target = e.target
+                    if(target.tagName.toLowerCase() == 'li'){
+                        self.handlerLi(target, 1)
+                    }
+                })
+            },
+            handlerLi: function(node, type){
+                var v = 0
+                if(!type){
+                    v = '5px'
+                }
+                node.style.borderRadius = v
+            }
+        }
+
+        var defaults = {
+            dom : {
+                container : '#container',
+                input     : '#input',
+                tplList   : '#tpl-list'
+            },
+            tpl : 
+                [
+                    '<div class="color-panle">' +
+                    '    <div class="color-read">' +
+                    '        <span class="color-val"></span><span class="color-show"></span>' +
+                    '    </div>' +
+                    '    <div class="color-list">' +
+                    '    </div>' +
+                    '</div>'
+                ]
+                
+        }
+        document.getElementById('input').onclick = function(e){
+            new Palette(defaults)
+            e.stopPropagation()
+        }
+    }());
+
+</script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>跟随对联广告-豪情</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <style type="text/css">
+        *{margin:0;padding:0;}
+        body{ font:12px/1.125 Microsoft YaHei; background:#fff; }
+        ul,li{list-style:none;}
+        a{text-decoration:none;}
+        .wrap{width:600px;height:350px;margin:10px auto;border:1px solid #ccc;}
+        .inner{padding:15px;}
+        .clearfix{overflow:hidden;_zoom:1;}
+        .none{display:none;}
+        .banner{width:100px;height:300px;position:absolute;top:200px;}
+        .banner:nth-child(1){left:100px;}
+        .banner:nth-child(2){right:100px;}
+    </style>
+</head>
+<body>
+<div style="height:3000px"></div>
+<div style="display:none;">
+    <div id="div" style="width:100px;height:200px;background:#000;"></div>
+    <button id="btn">test</button>
+</div>
+<script>
+    (function(){
+        var dog = {
+            $ : function(id){
+                return document.querySelector(id);
+            },
+            tpl : function(html, data){
+                return html.replace(/{{(\w+)}}/g, function(item, a){
+                    return data[a];
+                });
+            },
+            pos : function(obj, attr){
+                if(obj){
+                    return obj.getBoundingClientRect()[attr];    
+                } else {
+                    alert('对象不存在！');
+                }
+            },
+            viewSize: function(){
+                var de = document.documentElement;
+                return {
+                    'width': (window.innerWidth || (de && de.clientWidth) || doc.body.clientWidth),
+                    'height': (window.innerHeight || (de && de.clientHeight) || doc.body.clientHeight)
+                };
+            }(),
+            on: function(el, type, handler){
+                el.addEventListener(type, handler, false);
+            },
+            off: function(el, type, handler){
+                el.removeEventListener(type, handler, false);
+            },
+            css : function(obj, attr){
+                if(obj.currentStyle){
+                    return obj.currentStyle[attr];
+                } else {
+                    return getComputedStyle(obj, false)[attr];
+                } 
+            },
+            act : function(obj, attr, target){
+                var that = this;
+                clearInterval(obj.timer);
+                obj.timer = setInterval(function(){
+                    var stop = true;
+                    var cur = parseInt(that.css(obj, attr));
+                    var speed = (target - cur) / 8;
+                    speed = speed < 0 ? Math.ceil(speed) : Math.floor(speed);
+                    if(target != speed){
+                        stop = false;
+                    }
+                    obj.style[attr] = speed + cur + 'px';
+                    if(stop){
+                        clearInterval(obj.timer);
+                    }
+                }, 55);
+            },
+            each : function(arr, callback){
+                if(Array.isArray(arr)){
+                    for(var i = 0, l = arr.length; i < l; i++){
+                        if(callback.call(arr[i], i, arr[i++]) == false){
+                            break;
+                        }
+                    }
+                } else {
+                    for(var name in arr){
+                        if(callback.call(arr[name], name, arr[name]) == false){
+                            break;
+                        }
+                    }
+                }
+            },
+            create : function(opt){
+                var el = document.createElement(opt.tag || 'div');
+                this.each(opt, function(i, m){
+                    el[i] = this;
+                });
+                return el;
+            }
+        }
+        function Adv(){
+            var args = arguments[0];
+            for(var i in args){
+                this[i] = args[i];
+            }
+            this.init();
+        }
+        Adv.prototype = {
+            init : function(){
+                this.render();
+                this.bind();
+            },
+            render : function(){
+                var div = dog.create({ className : 'out'}),
+                    a = dog.create({ className : 'banner'}),
+                    b = null;
+                a.innerHTML = this.tpl;
+                b = a.cloneNode(true);
+                div.appendChild(a);
+                div.appendChild(b);
+                document.body.appendChild(div);
+                this.a = a;
+                this.b = b;
+            },
+            bind : function(){
+                var that = this,
+                    doc = document,
+                    scrollTop = 0,
+                    t = 0;
+                dog.on(window, 'scroll', function(){
+                    scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop;
+                    t = scrollTop + (doc.documentElement.clientHeight - that.a.offsetHeight) / 2;
+                    dog.act(that.a, 'top', t);
+                    dog.act(that.b, 'top', t);
+                });
+            },
+            getDom : function(){
+                
+            }
+        }
+        var defaults = {
+            id : 'dialog',
+            tpl : '<img src="images/ad.jpg" alt="">'
+        }
+        new Adv(defaults);
+    }());
+</script>
+</body>
+</html>
